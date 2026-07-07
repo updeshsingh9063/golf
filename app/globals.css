@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #f3eddf;
+  --cream-soft: #fbf6ea;
+  --ink: #161512;
+  --fairway: #14281d;
+  --moss: #66724b;
+  --pie: #c57933;
+  --crust: #8a4e25;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(197, 121, 51, 0.18), transparent 28rem),
+    radial-gradient(circle at 85% 5%, rgba(102, 114, 75, 0.22), transparent 26rem),
+    linear-gradient(135deg, var(--cream-soft), var(--cream));
+  font-family: "Aptos", "Segoe UI", sans-serif;
+}
+
+body::before {
+  pointer-events: none;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(22, 21, 18, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 21, 18, 0.04) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+::selection {
+  color: var(--cream);
+  background: var(--fairway);
+}
+
+.display {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.055em;
+}
+
+.rule {
+  border-color: rgba(22, 21, 18, 0.16);
+}
+
+.grain {
+  position: relative;
+  isolation: isolate;
+}
+
+.grain::after {
+  pointer-events: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E");
+}
+
+.number-card {
+  transform: translateZ(0);
+}
+
+.number-card:hover {
+  transform: translateY(-3px);
+}
