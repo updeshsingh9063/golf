@@ -138,9 +138,43 @@ export async function POST(request: NextRequest) {
       break;
     }
 
-    case "payment_intent.succeeded":
-      // Reconciliation is handled via checkout.session.completed above.
+    case "payment_intent.succeeded": {
+      const pi = event.data.object;
+      
+      if (pi.metadata?.type === "donation") {
+        const hatId = pi.metadata.hat_id;
+        const charityId = pi.metadata.charity_id;
+        
+        // Find owner by Stripe customer ID
+        if (pi.customer) {
+          const { data: owner } = await supabaseAdmin
+            .from("owners")
+            .select("id")
+            .eq("stripe_customer_id", pi.customer)
+            .single();
+
+          if (owner && hatId && charityId) {
+            // Upsert the donation using stripe_pi_id to prevent duplicates
+            // with the synchronous log in /api/donate
+            await supabaseAdmin.from("donations").upsert(
+              {
+                hat_id: hatId,
+                payer_owner_id: owner.id,
+                charity_id: charityId,
+                amount_cents: pi.amount,
+                platform_fee: 50, // Hardcoded for v1 PRD
+                stripe_fee: 15 + Math.floor(pi.amount * 0.029), // Estimate
+                stripe_pi_id: pi.id,
+                status: "succeeded"
+              },
+              { onConflict: "stripe_pi_id" }
+            );
+            console.log(`[webhook] ✅ Donation ${pi.id} logged via webhook.`);
+          }
+        }
+      }
       break;
+    }
 
     default:
       break;

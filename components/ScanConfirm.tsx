@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/commerce";
+import { loadStripe } from "@stripe/stripe-js";
 
 type Props = {
   token: string;
@@ -67,11 +68,27 @@ export function ScanConfirm({ token, hatNumber, charityName, hasOwnerSession }: 
       }
       
       if (res.status === 402) {
-        // SCA required - for v1 we might redirect to a hosted stripe page or just show error
-        // A full SCA flow requires Stripe Elements or Payment Request Button
-        setErrorMsg("Your card requires extra authentication. (SCA fallback pending)");
-        setState("error");
-        return;
+        // SCA required - trigger 3D Secure modal
+        const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+        if (!stripe) {
+          setErrorMsg("Failed to load payment provider.");
+          setState("error");
+          return;
+        }
+
+        const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret);
+        
+        if (confirmError) {
+          setErrorMsg(confirmError.message || "Authentication failed.");
+          setState("error");
+          return;
+        }
+
+        if (paymentIntent && paymentIntent.status === "succeeded") {
+          setDonationId(paymentIntent.id);
+          setState("success");
+          return;
+        }
       }
 
       if (!res.ok) {
