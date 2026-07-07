@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateCheckoutInput } from "@/lib/commerce";
 import { createStripeCheckoutSession, hasStripeConfig } from "@/lib/stripe";
-
-type GlobalWithReservations = typeof globalThis & {
-  __pfpReservations?: Map<number, number>;
-};
-
-const reservationStore =
-  (globalThis as GlobalWithReservations).__pfpReservations ??
-  new Map<number, number>();
-
-(globalThis as GlobalWithReservations).__pfpReservations = reservationStore;
+import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -22,25 +13,37 @@ export async function POST(request: NextRequest) {
   };
 
   const validationError = validateCheckoutInput(input);
-
   if (validationError) {
     return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   const origin = request.nextUrl.origin;
-  const now = Date.now();
-  const existingReservation = reservationStore.get(input.number);
 
-  if (existingReservation && existingReservation > now) {
+  // 1. Get Charity ID from Supabase
+  const { data: charityData } = await supabaseAdmin
+    .from("charities")
+    .select("id")
+    .eq("name", input.charity)
+    .single();
+
+  if (!charityData) {
+    return NextResponse.json({ error: "Invalid charity selected." }, { status: 400 });
+  }
+
+  // 2. Atomically reserve the hat in Supabase
+  const { data: updateData, error: updateError } = await supabaseAdmin
+    .from("hats")
+    .update({ status: "reserved", charity_id: charityData.id })
+    .eq("number", input.number)
+    .eq("status", "available")
+    .select();
+
+  if (updateError || !updateData || updateData.length === 0) {
     return NextResponse.json(
-      {
-        error: `Number ${input.number} is temporarily reserved. Pick another number or try again later.`
-      },
+      { error: `Number ${input.number} is temporarily reserved or sold. Pick another number.` },
       { status: 409 }
     );
   }
-
-  reservationStore.set(input.number, now + 20 * 60 * 1000);
 
   try {
     const session = await createStripeCheckoutSession({
@@ -61,7 +64,11 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    reservationStore.delete(input.number);
+    // Revert reservation if Stripe session creation fails
+    await supabaseAdmin
+      .from("hats")
+      .update({ status: "available", charity_id: null })
+      .eq("number", input.number);
 
     return NextResponse.json(
       {

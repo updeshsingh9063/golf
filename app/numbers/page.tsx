@@ -2,9 +2,31 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { HatBadge } from "@/components/HatBadge";
 import { Nav } from "@/components/Nav";
-import { hats, stats } from "@/lib/numbers";
+import { supabase } from "@/lib/supabase";
+import { HatNumber } from "@/lib/numbers";
 
-export default function NumbersPage() {
+export const revalidate = 0; // Disable cache for live availability
+
+export default async function NumbersPage() {
+  const { data: hatsData } = await supabase
+    .from("hats")
+    .select("number, status, charities(name)")
+    .order("number", { ascending: true });
+
+  const hats: HatNumber[] = (hatsData || []).map((row: any) => ({
+    number: row.number,
+    status: row.status,
+    charity: row.charities?.name || null,
+    ownerLabel: row.status === "sold" ? `Owner ${String(row.number).padStart(2, "0")}` : null,
+  }));
+
+  const stats = {
+    available: hats.filter((h) => h.status === "available").length,
+    sold: hats.filter((h) => h.status === "sold").length,
+    reserved: hats.filter((h) => h.status === "reserved").length,
+    total: hats.length || 72,
+  };
+
   return (
     <main>
       <Nav />

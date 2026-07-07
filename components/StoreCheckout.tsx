@@ -1,15 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { brand, consentText } from "@/lib/content";
-import { charities, hats } from "@/lib/numbers";
 
+type Hat = { number: number; status: string };
+type Charity = { id: string; name: string };
 type CheckoutState = "idle" | "loading" | "error" | "ready";
 
-export function StoreCheckout() {
-  const available = useMemo(() => hats.filter((hat) => hat.status === "available"), []);
-  const [number, setNumber] = useState(available[0]?.number ?? 2);
-  const [charity, setCharity] = useState(charities[0]);
+type Props = {
+  availableHats: Hat[];
+  charities: Charity[];
+};
+
+export function StoreCheckout({ availableHats, charities }: Props) {
+  const [number, setNumber] = useState(availableHats[0]?.number ?? 1);
+  const [charity, setCharity] = useState(charities[0]?.name ?? "");
   const [email, setEmail] = useState("");
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [state, setState] = useState<CheckoutState>("idle");
@@ -52,13 +57,24 @@ export function StoreCheckout() {
     }
   }
 
+  if (availableHats.length === 0) {
+    return (
+      <div className="rounded-[2rem] border border-ink/10 bg-cream p-12 text-center shadow-card">
+        <p className="text-sm font-black uppercase tracking-[0.28em] text-pie">Sold Out</p>
+        <h2 className="display mt-4 text-5xl font-black leading-none text-fairway">All 72 hats are sold.</h2>
+        <p className="mt-4 text-lg font-semibold text-ink/60">The full edition has found its owners. Check back for future drops.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <section className="rounded-[2rem] border border-ink/10 bg-cream p-6 shadow-card">
         <p className="text-sm font-black uppercase tracking-[0.24em] text-pie">Step 1</p>
         <h2 className="display mt-3 text-5xl font-black leading-none text-fairway">Choose your number.</h2>
+        <p className="mt-3 text-sm font-semibold text-ink/50">{availableHats.length} of 72 still available</p>
         <div className="mt-7 grid max-h-[34rem] grid-cols-4 gap-2 overflow-auto pr-1 sm:grid-cols-6">
-          {available.map((hat) => (
+          {availableHats.map((hat) => (
             <button
               key={hat.number}
               onClick={() => setNumber(hat.number)}
@@ -81,7 +97,7 @@ export function StoreCheckout() {
         <p className="text-sm font-black uppercase tracking-[0.24em] text-pie">Step 2</p>
         <h2 className="display mt-3 text-5xl font-black leading-none">Capture card-on-file.</h2>
         <p className="mt-4 text-sm font-semibold leading-6 text-cream/62">
-          Stripe Checkout will run in payment mode and save the card for future off-session $5 donations after explicit consent.
+          Stripe Checkout saves the card for future off-session $5 charity donations with explicit consent.
         </p>
 
         <div className="mt-7 space-y-5">
@@ -91,6 +107,7 @@ export function StoreCheckout() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="owner@example.com"
+              type="email"
               className="mt-2 w-full rounded-2xl border border-cream/15 bg-cream/10 px-4 py-4 text-base font-bold text-cream outline-none placeholder:text-cream/28 focus:border-pie"
             />
           </label>
@@ -103,7 +120,7 @@ export function StoreCheckout() {
               className="mt-2 w-full rounded-2xl border border-cream/15 bg-fairway px-4 py-4 text-base font-bold text-cream outline-none focus:border-pie"
             >
               {charities.map((item) => (
-                <option key={item}>{item}</option>
+                <option key={item.id} value={item.name}>{item.name}</option>
               ))}
             </select>
           </label>
@@ -151,3 +168,4 @@ export function StoreCheckout() {
     </div>
   );
 }
+
