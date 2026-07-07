@@ -26,7 +26,7 @@ export function Nav() {
             How it works
           </Link>
           <span className="rounded-full bg-pie px-4 py-2 text-cream shadow-[0_8px_24px_rgba(197,121,51,0.35)]">
-            Phase 1
+            Phase 3
           </span>
         </div>
       </nav>

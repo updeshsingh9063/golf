@@ -32,7 +32,7 @@ export async function createStripeCheckoutSession({
   const params = new URLSearchParams();
   params.set("mode", "payment");
   params.set("customer_email", email);
-  params.set("success_url", `${origin}/me?checkout=success&number=${number}`);
+  params.set("success_url", `${origin}/api/checkout/success?session_id={CHECKOUT_SESSION_ID}&number=${number}`);
   params.set("cancel_url", `${origin}/store?checkout=cancelled&number=${number}`);
   params.set("line_items[0][quantity]", "1");
   params.set("line_items[0][price_data][currency]", CURRENCY);
