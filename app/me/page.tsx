@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
+import { OwnerLookup } from "@/components/OwnerLookup";
 import { consentText } from "@/lib/content";
 import { formatMoney } from "@/lib/commerce";
 import { supabaseAdmin } from "@/lib/supabase";
+
 
 async function getOwnerByHatNumber(hatNumber: number) {
   const { data: hat } = await supabaseAdmin
@@ -99,18 +101,28 @@ export default async function OwnerPage({ searchParams }: { searchParams: Promis
 
       <section className="px-6 pb-20">
         <div className="mx-auto max-w-7xl">
-          {!owner ? (
+          {!hatNumber ? (
+            // No number in URL — show the lookup form
+            <OwnerLookup />
+          ) : !owner ? (
+            // Number provided but hat not found or not sold
             <div className="rounded-[2rem] border border-ink/10 bg-cream p-12 text-center shadow-card">
-              <p className="text-sm font-black uppercase tracking-[0.28em] text-pie">No owner found</p>
-              <h2 className="display mt-4 text-5xl font-black leading-none text-fairway">No hat found.</h2>
+              <p className="text-sm font-black uppercase tracking-[0.28em] text-pie">Not found</p>
+              <h2 className="display mt-4 text-5xl font-black leading-none text-fairway">Hat #{String(hatNumber).padStart(2, "0")} not found.</h2>
               <p className="mt-4 text-lg font-semibold text-ink/60">
-                {hatNumber ? `Hat #${hatNumber} has not been purchased yet or the number is invalid.` : "Please complete a purchase to access your owner area."}
+                This number hasn&apos;t been purchased yet or doesn&apos;t exist. Check your hat number and try again.
               </p>
-              <Link href="/store" className="mt-8 inline-block rounded-full bg-fairway px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-cream">
-                Buy a hat
-              </Link>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <Link href="/me" className="inline-block rounded-full border border-fairway px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-fairway">
+                  Try another number
+                </Link>
+                <Link href="/store" className="inline-block rounded-full bg-fairway px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-cream">
+                  Buy a hat
+                </Link>
+              </div>
             </div>
           ) : (
+
             <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
               <aside className="rounded-[2rem] border border-ink/10 bg-fairway p-6 text-cream shadow-card">
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-cream/45">Owner identity</p>

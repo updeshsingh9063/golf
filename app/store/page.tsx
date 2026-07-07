@@ -1,18 +1,18 @@
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
 import { StoreCheckout } from "@/components/StoreCheckout";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export const revalidate = 30; // Re-fetch every 30 seconds
 
 async function getStoreData() {
   const [hatsResult, charitiesResult] = await Promise.all([
-    supabase
+    supabaseAdmin
       .from("hats")
       .select("number, status")
       .in("status", ["available"])
       .order("number", { ascending: true }),
-    supabase
+    supabaseAdmin
       .from("charities")
       .select("id, name")
       .eq("active", true)

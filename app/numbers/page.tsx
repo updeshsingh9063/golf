@@ -2,13 +2,14 @@ import Link from "next/link";
 import { Footer } from "@/components/Footer";
 import { HatBadge } from "@/components/HatBadge";
 import { Nav } from "@/components/Nav";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
+
 import { HatNumber } from "@/lib/numbers";
 
 export const revalidate = 0; // Disable cache for live availability
 
 export default async function NumbersPage() {
-  const { data: hatsData } = await supabase
+  const { data: hatsData } = await supabaseAdmin
     .from("hats")
     .select("number, status, charities(name)")
     .order("number", { ascending: true });
